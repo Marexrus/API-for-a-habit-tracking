@@ -6,6 +6,9 @@ from fastapi import HTTPException
 import auth.utils
 import models
 
+import psycopg2
+from psycopg2 import Error
+
 """
 Date: 'DD-MM-YYYY'
 
@@ -17,13 +20,11 @@ check_ins: id habit_id check_datetime
 
 cursor = None
 
-
 def start_database():
     global cursor
-    connection = sqlite3.connect('database/database.db', autocommit=True, check_same_thread=False)
+    connection = psycopg2.connect(dbname="habits",user="admin",password="380251Max!",host="127.0.0.1",port="50500")
 
     cursor = connection.cursor()
-    cursor.execute("PRAGMA foreign_keys = ON")
 
     print_table("habits")
     print("-----------------")

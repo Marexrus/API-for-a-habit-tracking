@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, APIRouter, Form
 
 import datetime
 
-import database
+import database.database as db
 from utils import *
 from models import *
 
@@ -12,8 +12,8 @@ router = APIRouter(prefix='/habits', tags=['Habits'])
 @router.post('/create')
 async def create_habit(habit: Habit = Form()):
   print(habit)
-  result = database.add_habit(habit)
-  database.print_table("habits")
+  result = db.add_habit(habit)
+  db.print_table("habits")
   return result
 
 
@@ -24,7 +24,7 @@ async def read_habit(read_column: str,where_column: str | None = None,value: str
     if where_column == 'period': value=int(value)
   except ValueError:
     raise HTTPException(status_code=400, detail='Данные неверны')
-  data = database.read_table(read_column, where_column, value)
+  data = db.read_table(read_column, where_column, value)
   return data
 
 
@@ -35,10 +35,10 @@ async def update_habit(column:str, value, where_column:str, where_value:str):
     if where_column == 'period': value = int(value)
   except ValueError:
     raise HTTPException(status_code=400, detail='Данные неверны')
-  result = database.edit_habit(column, value, where_column, where_value)
+  result = db.edit_habit(column, value, where_column, where_value)
   if result == 'Error 404':
     raise HTTPException(status_code=404, detail="Поле не найдено")
-  database.print_table("habits")
+  db.print_table("habits")
   return result
 
 
@@ -49,8 +49,8 @@ async def delete_habit(column: str, value: str):
     if column == 'period': value = int(value)
   except ValueError:
     raise HTTPException(status_code=400, detail='Данные неверны')
-  result = database.delete_habit(column, value)
-  database.print_table("habits")
+  result = db.delete_habit(column, value)
+  db.print_table("habits")
   return result
 
 
@@ -58,8 +58,8 @@ async def delete_habit(column: str, value: str):
 async def create_check_in(habit_id: int, datetime: str|None=None):
   if not datetime:
     datetime = current_datetime()
-  result = database.add_check_in((habit_id, datetime))
-  database.print_table("check_ins")
+  result = db.add_check_in((habit_id, datetime))
+  db.print_table("check_ins")
   return result
 
 
@@ -67,8 +67,8 @@ async def create_check_in(habit_id: int, datetime: str|None=None):
 async def delete_check_in(habit_id: int, datetime: str):
   if not datetime:
     raise HTTPException(status_code=400, detail="дата не может быть равна нулю")
-  result = database.delete_check_in((habit_id, datetime))
-  database.print_table("check_ins")
+  result = db.delete_check_in((habit_id, datetime))
+  db.print_table("check_ins")
 
   return result
 
@@ -76,5 +76,5 @@ async def delete_check_in(habit_id: int, datetime: str):
 @router.post("/history")
 async def history(habit_id: int, date_from: str, date_to: str):
   date_to = (datetime.datetime.strptime(date_to, '%d-%m-%y %H:%M') + datetime.timedelta(minutes=1)).strftime('%d-%m-%y %H:%M')
-  history = database.select_history(habit_id, date_from, date_to)
+  history = db.select_history(habit_id, date_from, date_to)
   return history

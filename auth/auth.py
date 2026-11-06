@@ -1,11 +1,10 @@
 from fastapi import APIRouter, Depends, Form, HTTPException
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials, OAuth2PasswordBearer
+from fastapi.security import HTTPBearer, OAuth2PasswordBearer
 from jwt.exceptions import InvalidTokenError
 
 import models
 import auth.utils as utils
-import database as db
-from datetime import *
+import database.database as db
 from utils import *
 
 http_bearer = HTTPBearer()
