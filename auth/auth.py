@@ -8,12 +8,13 @@ import database.database as db
 from utils import *
 
 http_bearer = HTTPBearer()
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/jwt/login/')
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/auth/login/')
 router = APIRouter(prefix='/auth', tags=['Auth'])
 
 def select_user(username:str) -> models.UserModel:
-    db.cursor.execute("select * from users where username = ?", (username,))
+    db.cursor.execute("select * from users where username = %s", (username,))
     row = db.cursor.fetchone()
+    print(row)
     columns = [column[0] for column in db.cursor.description]
 
     user_data = dict(zip(columns, row))
@@ -24,6 +25,7 @@ def select_user(username:str) -> models.UserModel:
 def validate_user_auth(username: str = Form(), password: str = Form()):
     unauth_exc = HTTPException(status_code=401, detail='invalid username or password')
     user = select_user(username)
+    print(user)
 
     if user is None:
         raise unauth_exc

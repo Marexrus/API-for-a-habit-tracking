@@ -53,7 +53,7 @@ def add_habit(habit):
     try:
         cursor.execute("""
             INSERT INTO habits (user_id, name, color, period, start_date)
-            VALUES (?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s)
         """, (habit.user_id, habit.name, habit.color, habit.period, habit.date_start))
     except Exception as e:
         print(e)
@@ -63,7 +63,7 @@ def add_habit(habit):
 
 def edit_habit( column, value, where_column, where_value):
     try:
-        cursor.execute (f"UPDATE habits SET {column} = ? WHERE {where_column} = ?", (value, where_value))
+        cursor.execute (f"UPDATE habits SET {column} = %s WHERE {where_column} = %s", (value, where_value))
     except sqlite3.OperationalError:
         raise HTTPException(status_code=404, detail="Поле не найдено")
     return {"Success": True}
@@ -102,14 +102,14 @@ def delete_habit(column, value):
 def add_check_in(dt):
     habit_id, check_datetime = dt
     try:
-        cursor.execute('select check_datetime from check_ins where habit_id = ?',(habit_id,))
+        cursor.execute('select check_datetime from check_ins where habit_id = %s',(habit_id,))
         data = cursor.fetchall()
         dates = []
         for el in data:
             dates.append((el[0][0:8:1]))
         if check_datetime[0:8:1] in dates:
             raise HTTPException(status_code = 409, detail="Отметка уже существует")
-        cursor.execute("INSERT INTO check_ins('habit_id', 'check_datetime') VALUES(?, ?)", (habit_id, check_datetime))
+        cursor.execute("INSERT INTO check_ins('habit_id', 'check_datetime') VALUES(%s, %s)", (habit_id, check_datetime))
     except sqlite3.OperationalError:
         raise HTTPException(status_code=404, detail="Поле не найдено")
     return {"Success": True}
@@ -118,7 +118,7 @@ def add_check_in(dt):
 def delete_check_in(data):
     habit_id, check_datetime = data
     try:
-        cursor.execute('DELETE FROM check_ins WHERE habit_id = ? AND check_datetime = ?', (habit_id, check_datetime))
+        cursor.execute('DELETE FROM check_ins WHERE habit_id = %s AND check_datetime = %s', (habit_id, check_datetime))
     except sqlite3.OperationalError:
         raise HTTPException(status_code=404, detail="Поле не найдено")
     return {"Success": True}
@@ -126,7 +126,7 @@ def delete_check_in(data):
 
 def select_history(habit_id, date_from, date_to):
     try:
-        cursor.execute('select check_datetime from check_ins where check_datetime between ? and ? and habit_id = ?',
+        cursor.execute('select check_datetime from check_ins where check_datetime between %s and %s and habit_id = %s',
                     (date_from, date_to, habit_id))
     except sqlite3.OperationalError:
         raise HTTPException(status_code=404, detail="Поле не найдено")
@@ -143,5 +143,5 @@ def select_history(habit_id, date_from, date_to):
 
 def add_user(cursor, user):
     hash_password = auth.utils.hash_password(user.password)
-    cursor.execute("INSERT INTO users(username, hash_password, email, active, last_online, role) values(?,?,?,?,?,?)",(user.username, hash_password, user.email, user.active, user.last_online, user.role))
+    cursor.execute("INSERT INTO users(username, hash_password, email, active, last_online, role) values(%s,%s,%s,%s,%s,%s)",(user.username, hash_password, user.email, user.active, user.last_online, user.role))
     return {"Success": "True"}
