@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Form
 
-import database.database as db
+from database.database import *
 from utils import *
 from models import *
 import auth.auth as auth
@@ -11,13 +11,13 @@ app = FastAPI()
 app.include_router(auth.router)
 app.include_router(habits.router)
 
-db.start_database()
+#db.start_database()
+
 
 # Определяем GET-запрос по корневому пути "/"
 @app.get("/")
 def read_root():
   return {"message": "Привет, FastAPI!"}
-
 
 
 @app.post('/user/add')

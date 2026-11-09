@@ -1,14 +1,6 @@
 from pydantic import BaseModel
 
 
-class Habit(BaseModel):
-  user_id: int
-  name: str
-  color: str
-  period: int
-  date_start: str
-
-
 class AuthJWT(BaseModel):
   private_key_path: str = 'certs/jwt-private.pem'
   public_key_path: str = 'certs/jwt-public.pem'
@@ -21,10 +13,18 @@ class AuthJWT(BaseModel):
       return text
 
 
+class Habit(BaseModel):
+  user_id: int
+  name: str
+  color: str
+  period: int
+  date_start: str
+
+
 class UserModel(BaseModel):
-  id: int
+  id: int | None = None
   username: str
-  hash_password: bytes
+  hash_password: str
   email: str | None = None
   active: bool = True
   last_online: str | None = None

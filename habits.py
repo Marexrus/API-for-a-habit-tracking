@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, APIRouter, Form
 
 import datetime
 
-import database.database as db
+from database.database import *
 from utils import *
 from models import *
 

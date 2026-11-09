@@ -2,13 +2,15 @@ import jwt
 from models import *
 import bcrypt
 from datetime import *
+from database.database import *
+import utils
 
 private_key = auth_jwt.read_text(auth_jwt.private_key_path)
 public_key = auth_jwt.read_text(auth_jwt.public_key_path)
 
 
 def encode_jwt(payload: dict, private_key: str = private_key, algorithm: str = auth_jwt.algorithm, expire_minutes: int =  auth_jwt.expire_minutes):
-    now = datetime.utcnow()
+    now = datetime.datetime.utcnow()
     expire = now + timedelta(minutes=expire_minutes)
     payload.update(exp=expire, iat=now)
     encoded = jwt.encode(payload, private_key, algorithm=algorithm)
@@ -22,9 +24,9 @@ def decode_jwt(token: str, public_key: str = public_key, algorithm: str = auth_j
 
 def hash_password(password: str) -> bytes:
     salt = bcrypt.gensalt()
-    return bcrypt.hashpw(password.encode(), salt)
+    hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
+    return hashed.decode('utf-8')
 
 
-def check_password(password: str, hashed_password: bytes) -> bool:
-    return bcrypt.checkpw(password.encode(), hashed_password)
-
+def check_password(password: str, hashed_password: str) -> bool:
+    return bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8'))
