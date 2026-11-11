@@ -19,7 +19,7 @@ def select_user(username:str) -> models.UserModel:
     db.cursor.execute("select * from users where username = %s", (username,))
     row = db.cursor.fetchone()
     if not row:
-        raise HTTPException(status_code=403, details='User not found')
+        raise HTTPException(status_code=401, details='Unauthorized')
     columns = [column[0] for column in db.cursor.description]
 
     user_data = dict(zip(columns, row))
@@ -42,7 +42,7 @@ def validate_user_auth(username: str = Form(), password: str = Form()):
     return user
 
 
-def get_user(token: str = Depends(oauth2_scheme)):
+def get_user(token: str = Depends(oauth2_scheme)) -> models.UserModel:
     try:
         payload = decode_jwt(token=token)
     except InvalidTokenError:
@@ -62,7 +62,7 @@ def jwt_after_auth(user: models.UserModel = Depends(validate_user_auth)):
 def user_info(user: UserModel = Depends(get_user)):
     return user
 
-
+# добавить валидность данных
 @router.post("/register")
 def register(username: str, password: str, email: str | None = None):
     now = current_datetime()

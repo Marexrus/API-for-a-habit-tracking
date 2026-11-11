@@ -20,6 +20,7 @@ def read_root():
   return {"message": "Привет, FastAPI!"}
 
 
+# для удобного добавления в последствии удалю
 @app.post('/user/add')
 async def add_user(user: UserModel = Form()):
   print(user)
