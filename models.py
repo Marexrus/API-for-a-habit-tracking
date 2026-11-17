@@ -32,6 +32,10 @@ class UserModel(BaseModel):
   role: str | None = 'user'
 
 
+class UserResponse(BaseModel):
+  pass
+
+
 class TokenInfo(BaseModel):
   access_token: str
   token_type: str

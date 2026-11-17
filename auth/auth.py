@@ -1,6 +1,8 @@
-from fastapi import APIRouter, Depends, Form, HTTPException
+from fastapi import APIRouter, Depends, Form, HTTPException, Response, Cookie
 from fastapi.security import HTTPBearer, OAuth2PasswordBearer
 from jwt.exceptions import InvalidTokenError
+
+from typing import Annotated
 
 import models
 from auth.utils import *
@@ -19,7 +21,7 @@ def select_user(username:str) -> models.UserModel:
     db.cursor.execute("select * from users where username = %s", (username,))
     row = db.cursor.fetchone()
     if not row:
-        raise HTTPException(status_code=401, details='Unauthorized')
+        raise HTTPException(status_code=401, detail='Unauthorized')
     columns = [column[0] for column in db.cursor.description]
 
     user_data = dict(zip(columns, row))
@@ -46,20 +48,23 @@ def get_user(token: str = Depends(oauth2_scheme)) -> models.UserModel:
     try:
         payload = decode_jwt(token=token)
     except InvalidTokenError:
-        raise HTTPException(status_code=401, details="invalid token")
+        raise HTTPException(status_code=401, detail="invalid token")
     user = select_user(payload['username'])
     return user
 
 
 @router.post(path="/login/")
-def jwt_after_auth(user: models.UserModel = Depends(validate_user_auth)):
+def jwt_after_auth(response: Response, user: models.UserModel = Depends(validate_user_auth)):
     print(user)
-    jwt_payload = {"username":user.username, 'email': user.email, 'login_at': current_datetime()}
+    jwt_payload = {"username": user.username, 'id': user.id, 'email': user.email, 'login_at': current_datetime()}
     token = encode_jwt(payload=jwt_payload)
+    response.set_cookie('auth_token', token)
     return models.TokenInfo(access_token=token, token_type='Bearer')
 
 @router.get("/user/me/")
-def user_info(user: UserModel = Depends(get_user)):
+def user_info(token: Annotated[str, Cookie(alias="auth_token")] = None, user: UserModel = Depends(get_user)):
+    payload = decode_jwt(token)
+    print(payload)
     return user
 
 # добавить валидность данных
