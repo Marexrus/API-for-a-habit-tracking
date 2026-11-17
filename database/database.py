@@ -30,21 +30,21 @@ class Database:
         self.cursor = connection.cursor()
         self.prints()
 
-    def add_habit(self,auth_token, habit):
+    def add_habit(self,payload, habit):
         try:
             self.cursor.execute("""
                 INSERT INTO habits (user_id, name, color, period, start_date)
                 VALUES (%s, %s, %s, %s, %s)
-            """, (auth_token['id'], habit.name, habit.color, habit.period, habit.date_start))
+            """, (payload['id'], habit.name, habit.color, habit.period, habit.date_start))
         except Exception as e:
             print(e)
             raise HTTPException(status_code=404, detail="Поле не найдено")
         return {"Success": True}
 
-    def edit_habit(self, auth_token, column, value, where_column, where_value):
+    def edit_habit(self, payload, column, value, where_column, where_value):
         try:
             print(where_value)
-            self.cursor.execute (f"UPDATE habits SET {column} = %s WHERE {where_column} = %s, user_id = %s", (value, where_value, auth_token['id']))
+            self.cursor.execute (f"UPDATE habits SET {column} = %s WHERE {where_column} = %s AND user_id = %s", (value, where_value, payload['id']))
         except psycopg2.Error as e:
             print(e)
             raise HTTPException(status_code=404, detail="Поле не найдено")
@@ -64,54 +64,54 @@ class Database:
         self.print_table("users")
         print("-----------------")
 
-    def read_table(self, auth_token: dict, read_column:str, where_column:str|None = None, value:str|None = None):
+    def read_table(self, payload: dict, read_column:str, where_column:str|None = None, value:str|None = None):
         try:
             if read_column == "*" and where_column == None:
-                self.cursor.execute("SELECT * FROM habits where user_id = %s", (auth_token['id'],))
+                self.cursor.execute("SELECT * FROM habits where user_id = %s", (payload['id'],))
             elif read_column == "*" and where_column:
-                self.cursor.execute(f"SELECT * FROM habits WHERE {where_column} = %s, user_id = %s", (value, auth_token['id']))
+                self.cursor.execute(f"SELECT * FROM habits WHERE {where_column} = %s AND user_id = %s", (value, payload['id']))
             elif not where_column and not value:
-                self.cursor.execute(f"SELECT {read_column} FROM habits user_id = %s", (auth_token['id'],))
+                self.cursor.execute(f"SELECT {read_column} FROM habits WHERE user_id = %s", (payload['id'],))
             else:
-                self.cursor.execute(f"SELECT {read_column} FROM habits WHERE {where_column} = %s, user_id = %s",(value, auth_token['id']))
+                self.cursor.execute(f"SELECT {read_column} FROM habits WHERE {where_column} = %s AND user_id = %s",(value, payload['id']))
             data = self.cursor.fetchall()
         except psycopg2.Error:
             raise HTTPException(status_code=404, detail="Поле не найдено")
     
         return data
 
-    def delete_habit(self, auth_token, column, value):
+    def delete_habit(self, payload, column, value):
         try:
-            self.cursor.execute(f'DELETE FROM habits WHERE {column} = %s, user_id = %s', (value, auth_token['id']))
+            self.cursor.execute(f'DELETE FROM habits WHERE {column} = %s AND user_id = %s', (value, payload['id']))
         except psycopg2.Error:
             raise HTTPException(status_code=404, detail="Поле не найдено")
         return {"Success": True}
 
-    def add_check_in(self, auth_token, habit_id, datetime):
+    def add_check_in(self, payload, habit_id, datetime):
         try:
-            self.cursor.execute('select check_datetime from check_ins where habit_id = %s, user_id = %s',(habit_id, auth_token['id']))
+            self.cursor.execute('select check_datetime from check_ins where habit_id = %s and user_id = %s',(habit_id, payload['id']))
             data = self.cursor.fetchall()
             dates = []
             for el in data:
                 dates.append((el[0][0:8:1]))
             if datetime[0:8:1] in dates:
                 raise HTTPException(status_code=409, detail="Отметка уже существует")
-            self.cursor.execute("""INSERT INTO check_ins(habit_id, check_datetime, user_id) VALUES(%s, %s, %s)""", (habit_id, datetime, auth_token['id']))
+            self.cursor.execute("""INSERT INTO check_ins(habit_id, check_datetime, user_id) VALUES(%s, %s, %s)""", (habit_id, datetime, payload['id']))
         except psycopg2.Error:
             raise HTTPException(status_code=404, detail="Поле не найдено")
         return {"Success": True}
 
-    def delete_check_in(self, auth_token, habit_id, check_datetime):
+    def delete_check_in(self, payload, habit_id, check_datetime):
         try:
-            self.cursor.execute('DELETE FROM check_ins WHERE habit_id = %s AND check_datetime = %s AND user_id = %s', (habit_id, check_datetime, auth_token['id']))
+            self.cursor.execute('DELETE FROM check_ins WHERE habit_id = %s AND check_datetime = %s AND user_id = %s', (habit_id, check_datetime, payload['id']))
         except psycopg2.Error:
             raise HTTPException(status_code=404, detail="Поле не найдено")
         return {"Success": True}
 
-    def select_history(self, auth_token, habit_id, date_from, date_to):
+    def select_history(self, payload, habit_id, date_from, date_to):
         try:
             self.cursor.execute('select check_datetime from check_ins where check_datetime between %s and %s and habit_id = %s and user_id = %s',
-                        (date_from, date_to, habit_id, auth_token['id']))
+                        (date_from, date_to, habit_id, payload['id']))
         except psycopg2.Error:
             raise HTTPException(status_code=404, detail="Поле не найдено")
         data = self.cursor.fetchall()

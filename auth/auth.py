@@ -50,7 +50,7 @@ def get_user(token: str = Depends(oauth2_scheme)) -> models.UserModel:
     except InvalidTokenError:
         raise HTTPException(status_code=401, detail="invalid token")
     user = select_user(payload['username'])
-    return user
+    return user.model_dump(exclude={"hash_password"})
 
 
 @router.post(path="/login/")
@@ -61,11 +61,11 @@ def jwt_after_auth(response: Response, user: models.UserModel = Depends(validate
     response.set_cookie('auth_token', token)
     return models.TokenInfo(access_token=token, token_type='Bearer')
 
+
 @router.get("/user/me/")
-def user_info(token: Annotated[str, Cookie(alias="auth_token")] = None, user: UserModel = Depends(get_user)):
-    payload = decode_jwt(token)
-    print(payload)
+def user_info(user: UserModel = Depends(get_user)):
     return user
+
 
 # добавить валидность данных
 @router.post("/register")
